@@ -1,0 +1,49 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ include "leadcast.fullname" . }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "common.trinnex.labels" . | nindent 4 }}
+    {{- include "common.leadcast.labels" . | nindent 4 }}
+    {{- include "leadcast.labels" . | nindent 4 }}
+spec:
+  gateways: {{ .Values.virtualservice.gateways }}
+  hosts: {{ .Values.virtualservice.hosts }}
+  http:
+    - headers:
+        request:
+          set:
+            x-forwarded-proto: https
+      match:
+        - ignoreUriCase: true
+          uri:
+            prefix: {{ default "/api/" .Values.virtualservice.api.prefix  }}
+      {{ if .Values.virtualservice.api.rewrite }}
+      rewrite:
+        uri: {{ default "/" .Values.virtualservice.api.rewrite }}
+      {{ end }}
+      route:
+        - destination:
+            host: {{ include "api.fullname" .Subcharts.api }}
+            port:
+              number: {{ default 80 .Values.virtualservice.api.port }}
+      timeout: {{ default "60s" .Values.virtualservice.api.timeout }}
+    - headers:
+        request:
+          set:
+            x-forwarded-proto: https
+      match:
+        - ignoreUriCase: true
+          uri:
+            prefix: {{ default "/" .Values.virtualservice.dashboard.prefix }}
+      {{ if .Values.virtualservice.dashboard.rewrite }}
+      rewrite:
+        uri: {{ default "/" .Values.virtualservice.dashboard.rewrite }}
+      {{ end }}
+      route:
+        - destination:
+            host: {{ include "dashboard.fullname" .Subcharts.dashboard }}
+            port:
+              number: {{ default 80 .Values.virtualservice.dashboard.port }}
+      timeout: {{ default "60s" .Values.virtualservice.dashboard.timeout }}

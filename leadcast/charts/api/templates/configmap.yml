@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "api.fullname" . }}-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "common.trinnex.labels" . | nindent 4 }}
+    {{- include "common.leadcast.labels" . | nindent 4 }}
+    {{- include "api.labels" . | nindent 4 }}
+data:
+  appsettings.json: |
+    {
+      "OAuthSettings": {
+        "Url": {{ .Values.auth.url | quote }},
+        "Audience": {{ .Values.auth.audience | quote }}
+      },
+      "ApplicationSettings": {
+        "Server": {{ .Values.database.mongo.server | quote }},
+        "Port": 27017,
+        "ApplicationDatabase": {{ default .Values.database.mongo.database "RowdyOrca" | quote }}
+      },
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft": "Warning",
+          "Microsoft.Hosting.Lifetime": "Information"
+        }
+      },
+      "AllowedHosts": "*"
+    }
